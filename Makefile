@@ -1,14 +1,8 @@
 all:
-	@make build
-
-build:
-	@go build -o build/litemysql cmd/litemysql/main.go
+	@make install
 
 install:
-	@make build
-	@cp -rf build/litemysql /usr/local/bin/litemysql
+	@chmod +x sqlite2mysql.pl
+	@cp -rf sqlite2mysql.pl /usr/local/bin/sqlite2mysql
 
-clean:
-	@rm -rf build/
-
-.PHONY: build clean
+.PHONY: install
