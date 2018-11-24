@@ -16,16 +16,22 @@ print "SET \@\@global.sql_mode = 'NO_BACKSLASH_ESCAPES,NO_AUTO_CREATE_USER,NO_EN
 
 while (my $line = <$info>) {
   if (($line !~  /BEGIN TRANSACTION/) && ($line !~ /COMMIT/) && ($line !~ /sqlite_sequence/) && ($line !~ /CREATE UNIQUE INDEX/) && ($line !~ /PRAGMA foreign_keys=OFF/)) {
-    $line =~ s/\"/\`/g;
-    $line =~ s/CREATE TABLE IF NOT EXISTS \`(.*?)\` (.*)\;/DROP TABLE IF EXISTS $1;\nCREATE TABLE IF NOT EXISTS $1 $2;\n/;
-    $line =~ s/(CREATE TABLE.*)(primary key) (autoincrement)(.*)()\);/$1AUTO_INCREMENT$4, PRIMARY KEY(id))$5;/;
+    if ($line =~ /CREATE TABLE/g) {
+      $line =~ s/\"/\`/g;
+      $line =~ s/CREATE TABLE IF NOT EXISTS \`(.*?)\` (.*)\;/DROP TABLE IF EXISTS $1;\nCREATE TABLE IF NOT EXISTS $1 $2;\n/;
+      $line =~ s/(CREATE TABLE.*)(primary key) (autoincrement)(.*)()\);/$1AUTO_INCREMENT$4, PRIMARY KEY(id))$5;/;
+    }
 
     while ($line =~ /(.*)([0-9]{13})(.*)/g) {
       my $n = substr($2, 0, 10);
       $line = "$1$n$3";
     }
 
-    $line =~ s/\b([0-9]{10})\b/FROM_UNIXTIME($1)/g;
+    while ($line =~ /(.*)(\,)([0-9]{10})(.*)/g) {
+      $line = "$1$2FROM_UNIXTIME($3)$4";
+    }
+
+    # $line =~ s/\b([0-9]{10})\b/FROM_UNIXTIME($1)/g;
 
     while ($line =~ /(.*)([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(.*?)[Z]?(.*)/g) {
       my $d = "$2-$3-$4 $5:$6:$7";
